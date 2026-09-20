@@ -1,25 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { runGeocodeQueue } from "./domain/geocode-queue";
-import { normalizeLine, parseAddresses } from "./domain/parse-addresses";
-import type { Entry, GeocodePort } from "./domain/types";
-import {
-  countByStatus,
-  store as defaultStore,
-  useStore,
-  type Store,
-} from "./state/store";
-import { createFakeGeocoder } from "./geocoding/fake-adapter";
-import { createKakaoGeocoderFromGlobal } from "./geocoding/kakao-adapter";
-import { loadKakaoSdk, type LoadFailure } from "./map/load-kakao-sdk";
-import { MapView } from "./map/MapView";
-import { downloadText } from "./share/download";
-import { csvFileName, toCsv } from "./share/to-csv";
-import { decodeAddresses, encodeAddresses } from "./share/url-state";
-import { AddressInput } from "./ui/AddressInput";
-import { BottomSheet, type SheetSnap } from "./ui/BottomSheet";
-import { ProgressBar } from "./ui/ProgressBar";
-import { ResultList } from "./ui/ResultList";
+import { runGeocodeQueue } from './domain/geocode-queue';
+import { normalizeLine, parseAddresses } from './domain/parse-addresses';
+import type { Entry, GeocodePort } from './domain/types';
+import { countByStatus, store as defaultStore, useStore, type Store } from './state/store';
+import { createFakeGeocoder } from './geocoding/fake-adapter';
+import { createKakaoGeocoderFromGlobal } from './geocoding/kakao-adapter';
+import { loadKakaoSdk, type LoadFailure } from './map/load-kakao-sdk';
+import { MapView } from './map/MapView';
+import { downloadText } from './share/download';
+import { csvFileName, toCsv } from './share/to-csv';
+import { decodeAddresses, encodeAddresses } from './share/url-state';
+import { AddressInput } from './ui/AddressInput';
+import { BottomSheet, type SheetSnap } from './ui/BottomSheet';
+import { ProgressBar } from './ui/ProgressBar';
+import { ResultList } from './ui/ResultList';
 
 export type AppProps = {
   /**
@@ -45,10 +40,7 @@ export type AppProps = {
 function scrollIntoView(selector: string, block: ScrollLogicalPosition): void {
   requestAnimationFrame(() => {
     const target = document.querySelector(selector);
-    if (
-      target instanceof HTMLElement &&
-      typeof target.scrollIntoView === "function"
-    ) {
+    if (target instanceof HTMLElement && typeof target.scrollIntoView === 'function') {
       target.scrollIntoView({ block });
     }
   });
@@ -59,32 +51,30 @@ function selectLine(field: HTMLTextAreaElement | null, raw: string): void {
   if (field === null) return;
   field.focus();
 
-  const lines = field.value.split("\n");
+  const lines = field.value.split('\n');
   const index = lines.findIndex((line) => normalizeLine(line) === raw);
   if (index === -1) return;
 
   // 줄 시작 오프셋 = 앞 줄들의 길이 합 + 그만큼의 줄바꿈
-  const start = lines
-    .slice(0, index)
-    .reduce((sum, line) => sum + line.length + 1, 0);
+  const start = lines.slice(0, index).reduce((sum, line) => sum + line.length + 1, 0);
   field.setSelectionRange(start, start + (lines[index]?.length ?? 0));
 }
 
 export function App({
   port,
   store = defaultStore,
-  hash = globalThis.location?.hash ?? "",
+  hash = globalThis.location?.hash ?? '',
   clipboard,
   download = downloadText,
 }: AppProps) {
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
   /**
    * 바텀 시트가 선 자리. 좁은 화면에서만 뜻이 있다 — 넓은 화면에서는 CSS 가
    * 시트를 그냥 왼쪽 칸으로 만들고 이 값을 무시한다.
    *
    * 첫 화면은 `full` 이다. 아직 아무것도 없는 지도보다 입력창이 먼저 필요하다.
    */
-  const [snap, setSnap] = useState<SheetSnap>("full");
+  const [snap, setSnap] = useState<SheetSnap>('full');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   /** `고쳐서 다시` 가 고르라고 표시해 둔 원문. 렌더 뒤에 그 줄을 선택한다. */
@@ -94,7 +84,7 @@ export function App({
   const [kakaoPort, setKakaoPort] = useState<GeocodePort | null>(null);
   const [sdkFailure, setSdkFailure] = useState<LoadFailure | null>(null);
 
-  const key = import.meta.env.VITE_KAKAO_JS_KEY ?? "";
+  const key = import.meta.env.VITE_KAKAO_JS_KEY ?? '';
   /**
    * 키가 있는데 Kakao 어댑터가 아직(또는 끝내) 없는 상태.
    *
@@ -102,12 +92,10 @@ export function App({
    * "못 찾음" 으로 찍힌다. 로드가 실패한 뒤라면 그 상태가 영영 이어진다. 그러니
    * **조회 자체를 잠근다.** 키가 없을 때 가짜로 흐름을 볼 수 있는 것은 그대로 둔다.
    */
-  const waitingForSdk = port === undefined && key !== "" && kakaoPort === null;
+  const waitingForSdk = port === undefined && key !== '' && kakaoPort === null;
   // 주입이 최우선(테스트), 그다음이 실제 SDK, 마지막이 가짜다. 키가 없어도 앱은 돈다.
   const activePort =
-    port ??
-    kakaoPort ??
-    (fallbackPort.current ??= createFakeGeocoder({ delayMs: 120 }));
+    port ?? kakaoPort ?? (fallbackPort.current ??= createFakeGeocoder({ delayMs: 120 }));
 
   // SDK 로더는 같은 약속을 나눠 주므로, 지도 쪽과 따로 불러도 스크립트는 하나다.
   useEffect(() => {
@@ -141,14 +129,14 @@ export function App({
       store.setEntries(parsed);
       store.setRunning(true);
       // 마커가 하나씩 찍히는 것을 봐야 한다. 시트가 화면을 다 덮고 있으면 못 본다.
-      setSnap("half");
+      setSnap('half');
       /*
        * 시트(넓은 화면에서는 왼쪽 패널) 안을 목록까지 내린다.
        *
        * 누르고 나면 보고 싶은 것은 방금 넣은 주소가 아니라 결과다. 스크롤이 입력창에
        * 머물러 있으면 시트를 반만 연 화면에서는 목록이 한 줄도 안 보인다.
        */
-      scrollIntoView(".result-list", "start");
+      scrollIntoView('.result-list', 'start');
 
       try {
         await runGeocodeQueue({
@@ -186,7 +174,7 @@ export function App({
       restored.current = true;
       const addresses = decodeAddresses(hash);
       if (addresses.length > 0) {
-        const joined = addresses.join("\n");
+        const joined = addresses.join('\n');
         setText(joined);
         autoRun.current = joined;
       }
@@ -214,7 +202,7 @@ export function App({
    */
   const retry = useCallback((entry: Entry) => {
     const field = textareaRef.current;
-    const current = field?.value ?? "";
+    const current = field?.value ?? '';
     const lines = current.split(/\r?\n/);
 
     if (lines.some((line) => normalizeLine(line) === entry.raw)) {
@@ -225,7 +213,7 @@ export function App({
 
     // 붙이는 경우에는 DOM 이 아직 새 값을 모른다. 렌더 뒤에 고르도록 남겨 둔다.
     pendingSelection.current = entry.raw;
-    setText([...lines, entry.raw].join("\n").replace(/^\n+/, ""));
+    setText([...lines, entry.raw].join('\n').replace(/^\n+/, ''));
   }, []);
 
   // 줄을 붙인 뒤의 선택. 렌더가 끝나 DOM 이 새 값을 들고 있을 때 실행된다.
@@ -241,7 +229,7 @@ export function App({
     setFocusedId(entry.id);
     // 좁은 화면에서 목록을 고르면 지도를 봐야 한다. 시트가 화면을 다 덮고 있으면
     // panTo 가 일어난 것을 아무도 못 본다.
-    setSnap((current) => (current === "full" ? "half" : current));
+    setSnap((current) => (current === 'full' ? 'half' : current));
   }, []);
 
   /**
@@ -250,15 +238,18 @@ export function App({
    * 목록 → 지도는 처음부터 있었지만 그 반대가 없었다. 마커가 스무 개 찍힌 화면에서
    * "저 점이 어느 주소였지" 를 물을 방법이 없었다는 뜻이다.
    */
-  const selectMarker = useCallback((id: string) => {
-    setFocusedId(id);
-    setSnap((current) => (current === "peek" ? "half" : current));
-    // 목록에서 그 줄이 보이게 한다. 시트를 열어 줬는데 엉뚱한 줄이 보이면 소용없다.
-    //
-    // `li` 로 좁히는 것이 중요하다. 같은 `data-entry-id` 가 지도의 마커에도 붙어 있고,
-    // 지도가 DOM 에서 먼저 오므로 좁히지 않으면 마커를 제자리로 스크롤하다 만다.
-    scrollIntoView(`li[data-entry-id="${CSS.escape(id)}"]`, "nearest");
-  }, []);
+  const selectMarker = useCallback(
+    (id: string) => {
+      setFocusedId(id);
+      setSnap((current) => (current === 'peek' ? 'half' : current));
+      // 목록에서 그 줄이 보이게 한다. 시트를 열어 줬는데 엉뚱한 줄이 보이면 소용없다.
+      //
+      // `li` 로 좁히는 것이 중요하다. 같은 `data-entry-id` 가 지도의 마커에도 붙어 있고,
+      // 지도가 DOM 에서 먼저 오므로 좁히지 않으면 마커를 제자리로 스크롤하다 만다.
+      scrollIntoView(`li[data-entry-id="${CSS.escape(id)}"]`, 'nearest');
+    },
+    [],
+  );
 
   /**
    * 링크 복사와 CSV 내려받기.
@@ -270,23 +261,15 @@ export function App({
   const [shareNote, setShareNote] = useState<string | null>(null);
 
   const copyLink = useCallback(() => {
-    const encoded = encodeAddresses(
-      parseAddresses(text).map((entry) => entry.raw),
-    );
+    const encoded = encodeAddresses(parseAddresses(text).map((entry) => entry.raw));
     if (!encoded.ok) {
       // 이 순간 목록이 비어 있으면 CSV 버튼은 아직 잠겨 있다. 순서를 같이 알려 준다.
-      setShareNote(
-        "주소가 너무 많아 링크에 담을 수 없습니다. 지도에 표시한 뒤 CSV 로 내려받아 주세요.",
-      );
+      setShareNote('주소가 너무 많아 링크에 담을 수 없습니다. 지도에 표시한 뒤 CSV 로 내려받아 주세요.');
       return;
     }
 
-    const base = (globalThis.location?.href ?? "").split("#")[0] ?? "";
-    const writeText =
-      clipboard?.writeText ??
-      globalThis.navigator?.clipboard?.writeText.bind(
-        globalThis.navigator.clipboard,
-      );
+    const base = (globalThis.location?.href ?? '').split('#')[0] ?? '';
+    const writeText = clipboard?.writeText ?? globalThis.navigator?.clipboard?.writeText.bind(globalThis.navigator.clipboard);
     if (writeText === undefined) {
       // 클립보드가 막힌 브라우저에서도 링크 자체는 손에 쥐여 준다.
       setShareNote(`${base}${encoded.hash}`);
@@ -294,7 +277,7 @@ export function App({
     }
 
     void writeText(`${base}${encoded.hash}`).then(
-      () => setShareNote("링크를 복사했습니다."),
+      () => setShareNote('링크를 복사했습니다.'),
       () => setShareNote(`${base}${encoded.hash}`),
     );
   }, [clipboard, text]);
@@ -305,7 +288,7 @@ export function App({
 
   const skip = useCallback(
     (entry: Entry) => {
-      store.updateEntry(entry.id, { status: "skipped" });
+      store.updateEntry(entry.id, { status: 'skipped' });
     },
     [store],
   );
@@ -316,31 +299,24 @@ export function App({
    * 칩과 **다른 문장**이어야 한다. `찾음 5` 를 여기서도 쓰면 화면에 같은 글이 둘이 되고,
    * 그 글로 화면을 찾는 저니 테스트가 어느 쪽을 가리키는지 알 수 없게 된다.
    */
-  const status = `${total}곳 중 ${found}곳 확인${failed === 0 ? "" : ` · ${failed}곳 실패`}`;
+  const status = `${total}곳 중 ${found}곳 확인${failed === 0 ? '' : ` · ${failed}곳 실패`}`;
 
   return (
     // `main` 이다. 스크린 리더의 "본문으로 건너뛰기" 가 닿을 자리가 있어야 한다.
     <main className="app">
       <header className="app__bar" data-map-overlay="top">
-        <h1>location marker</h1>
-        <p className="app__tagline">
-          주소를 여러 줄 붙여넣으면 지도에 표시합니다.
-        </p>
+        <h1>location maker</h1>
+        <p className="app__tagline">주소를 여러 줄 붙여넣으면 지도에 표시합니다.</p>
       </header>
       {/* 지도가 바닥이다. 시트와 앱바가 그 위에 얹힌다 — 좁은 화면에서 지도는
           스크롤해야 나오는 문서의 한 블록이 아니라 화면 그 자체여야 한다. */}
       <div className="app__map">
-        <MapView
-          entries={entries}
-          focusedId={focusedId}
-          onMarkerSelect={selectMarker}
-        />
+        <MapView entries={entries} focusedId={focusedId} onMarkerSelect={selectMarker} />
         {/* 지도가 실제로 떠 있을 때만 말한다. 지도 자리에 오류 문구가 떠 있는데
             "마커가 찍혔다" 고 하면 화면이 서로 다른 말을 한다. */}
         {kakaoPort !== null && !running && entries.length > 0 && (
           <p className="app__map-note" aria-live="polite">
-            찾은 {found}곳에 번호 마커를 찍었습니다. 실패 {failed}곳은 목록에만
-            남습니다.
+            찾은 {found}곳에 번호 마커를 찍었습니다. 실패 {failed}곳은 목록에만 남습니다.
           </p>
         )}
       </div>
@@ -358,20 +334,10 @@ export function App({
           : { head: <p className="sheet__status">{status}</p> })}
         footer={
           <div className="app__actions">
-            <button
-              type="button"
-              className="button button--small"
-              onClick={saveCsv}
-              disabled={entries.length === 0 || running}
-            >
+            <button type="button" className="button button--small" onClick={saveCsv} disabled={entries.length === 0 || running}>
               CSV 내려받기
             </button>
-            <button
-              type="button"
-              className="button button--small"
-              onClick={copyLink}
-              disabled={text.trim() === ""}
-            >
+            <button type="button" className="button button--small" onClick={copyLink} disabled={text.trim() === ''}>
               링크 복사
             </button>
           </div>
@@ -391,8 +357,8 @@ export function App({
         {waitingForSdk && (
           <p className="app__notice" aria-live="polite">
             {sdkFailure === null
-              ? "지도를 불러오는 중입니다. 준비되면 조회할 수 있습니다."
-              : "지도를 불러오지 못해 조회를 멈춰 뒀습니다. 지도 자리의 안내를 확인해 주세요."}
+              ? '지도를 불러오는 중입니다. 준비되면 조회할 수 있습니다.'
+              : '지도를 불러오지 못해 조회를 멈춰 뒀습니다. 지도 자리의 안내를 확인해 주세요.'}
           </p>
         )}
         {shareNote !== null && (
@@ -400,13 +366,7 @@ export function App({
             {shareNote}
           </p>
         )}
-        <ResultList
-          entries={entries}
-          onRetry={retry}
-          onSkip={skip}
-          onSelect={select}
-          running={running}
-        />
+        <ResultList entries={entries} onRetry={retry} onSkip={skip} onSelect={select} running={running} />
       </BottomSheet>
     </main>
   );

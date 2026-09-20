@@ -1,6 +1,6 @@
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore } from 'react';
 
-import type { Entry } from "../domain/types";
+import type { Entry } from '../domain/types';
 
 /**
  * 항목 배열 하나와 그것을 구독하는 것이 전부다. 상태 라이브러리를 쓰지 않는다 —
@@ -74,11 +74,7 @@ export function createStore(initial: StoreState = EMPTY): Store {
 export const store = createStore();
 
 export function useStore(target: Store = store): StoreState {
-  return useSyncExternalStore(
-    target.subscribe,
-    target.getSnapshot,
-    target.getSnapshot,
-  );
+  return useSyncExternalStore(target.subscribe, target.getSnapshot, target.getSnapshot);
 }
 
 /** 화면 여러 곳이 같은 계산을 반복하지 않도록 한 번에 센다. */
@@ -91,13 +87,9 @@ export function countByStatus(entries: Entry[]): {
   let found = 0;
   let failed = 0;
   for (const entry of entries) {
-    if (entry.status === "found") found += 1;
+    if (entry.status === 'found') found += 1;
     // 못 찾은 것과 오류는 사용자에게 똑같이 "안 된 것" 이다. 한 숫자로 센다.
-    else if (
-      entry.status === "notFound" ||
-      entry.status === "failed" ||
-      entry.status === "skipped"
-    )
+    else if (entry.status === 'notFound' || entry.status === 'failed' || entry.status === 'skipped')
       failed += 1;
   }
   return { found, failed, done: found + failed, total: entries.length };

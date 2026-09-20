@@ -9,7 +9,7 @@
  */
 
 /** 해시 안의 키. `#a=...` 한 칸만 쓴다. */
-export const HASH_KEY = "a";
+export const HASH_KEY = 'a';
 
 /**
  * 해시 길이 상한. **재 본 값에서 정했다.**
@@ -21,25 +21,22 @@ export const HASH_KEY = "a";
  * 잘린 링크는 **열리기는 하는데** 주소가 몇 개 사라진 채로 열려 사용자가 알아채기 어렵다.
  * 그래서 자르지 않고 거절하고 알려 준다.
  *
- * 상한은 해시에만 건다. 배포 주소(`https://doosies.github.io/location_marker/`)가 앞에
+ * 상한은 해시에만 건다. 배포 주소(`https://doosies.github.io/location_maker/`)가 앞에
  * 40자쯤 더 붙지만, 그건 링크마다 같은 값이라 여기서 셀 이유가 없다.
  */
 export const MAX_HASH_LENGTH = 4000;
 
 export type EncodeResult =
   | { ok: true; hash: string }
-  | { ok: false; reason: "too-long"; limit: number };
+  | { ok: false; reason: 'too-long'; limit: number };
 
 /** 주소 목록을 `#a=...` 로 만든다. 빈 목록이면 해시를 붙이지 않는다. */
 export function encodeAddresses(addresses: string[]): EncodeResult {
-  const lines = addresses
-    .map((line) => line.trim())
-    .filter((line) => line !== "");
-  if (lines.length === 0) return { ok: true, hash: "" };
+  const lines = addresses.map((line) => line.trim()).filter((line) => line !== '');
+  if (lines.length === 0) return { ok: true, hash: '' };
 
-  const hash = `#${HASH_KEY}=${toBase64Url(lines.join("\n"))}`;
-  if (hash.length > MAX_HASH_LENGTH)
-    return { ok: false, reason: "too-long", limit: MAX_HASH_LENGTH };
+  const hash = `#${HASH_KEY}=${toBase64Url(lines.join('\n'))}`;
+  if (hash.length > MAX_HASH_LENGTH) return { ok: false, reason: 'too-long', limit: MAX_HASH_LENGTH };
 
   return { ok: true, hash };
 }
@@ -58,9 +55,9 @@ export function decodeAddresses(hash: string): string[] {
   if (text === null) return [];
 
   return text
-    .split("\n")
+    .split('\n')
     .map((line) => line.trim())
-    .filter((line) => line !== "");
+    .filter((line) => line !== '');
 }
 
 /**
@@ -72,39 +69,36 @@ export function decodeAddresses(hash: string): string[] {
  */
 function toBase64Url(text: string): string {
   const bytes = new TextEncoder().encode(text);
-  let binary = "";
+  let binary = '';
   for (const byte of bytes) binary += String.fromCharCode(byte);
 
   // `+` 와 `/` 는 URL 에서 뜻이 있고, `=` 는 붙는 곳마다 다르게 다뤄진다.
-  return btoa(binary)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /** base64url → UTF-8. 조금이라도 깨져 있으면 `null` 이다. */
 function fromBase64Url(value: string): string | null {
   try {
-    const binary = atob(value.replace(/-/g, "+").replace(/_/g, "/"));
+    const binary = atob(value.replace(/-/g, '+').replace(/_/g, '/'));
     const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
     // `fatal` 이 없으면 깨진 바이트가 U+FFFD 로 조용히 통과한다. 그건 주소가 아니다.
-    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
   } catch {
     return null;
   }
 }
 
 function readParam(hash: string): string | null {
-  const raw = hash.startsWith("#") ? hash.slice(1) : hash;
-  if (raw === "") return null;
+  const raw = hash.startsWith('#') ? hash.slice(1) : hash;
+  if (raw === '') return null;
 
-  for (const part of raw.split("&")) {
-    const separator = part.indexOf("=");
+  for (const part of raw.split('&')) {
+    const separator = part.indexOf('=');
     if (separator === -1) continue;
     if (part.slice(0, separator) !== HASH_KEY) continue;
 
     const value = part.slice(separator + 1);
-    return value === "" ? null : value;
+    return value === '' ? null : value;
   }
 
   return null;
